@@ -1,0 +1,544 @@
+{
+  "info": {
+    "name": "Medora Healthcare",
+    "description": "All 25 operations. Run individually with the appropriate role and environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Register",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/auth/register/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sample Person\",\n  \"email\": \"{{new_email}}\",\n  \"password\": \"{{temporary_password}}\",\n  \"role\": \"patient\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        },
+        "description": "Set role to doctor or supervisor for admin approval. Doctor requests also need specialization_slug and registration_number."
+      }
+    },
+    {
+      "name": "2. Login",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/auth/login/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"portal\": \"patient\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        },
+        "description": "Set portal to doctor or supervisor as appropriate. Administrators use supervisor."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const tokens = pm.response.json();",
+              "  pm.environment.set('access_token', tokens.access);",
+              "  pm.environment.set('refresh_token', tokens.refresh);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Create patient",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/patients/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sample Person\",\n  \"email\": \"sample-patient@example.com\",\n  \"password\": \"{{temporary_password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "4. List patients",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/patients/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "5. Patient details",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/patients/{{patient_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "6. Update patient",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/patients/{{patient_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sample Patient\",\n  \"date_of_birth\": null,\n  \"gender\": \"unspecified\",\n  \"blood_group\": \"\",\n  \"phone\": \"\",\n  \"address\": \"\",\n  \"allergies\": \"\",\n  \"medical_history\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Example is a supervisor PUT. For the super admin add managed_by (UUID or null). See the API contract for self edits."
+      }
+    },
+    {
+      "name": "7. Archive patient",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/api/patients/{{patient_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "8. Create doctor",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/doctors/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sample Doctor\",\n  \"email\": \"sample-doctor@example.com\",\n  \"password\": \"{{temporary_password}}\",\n  \"specialization\": \"{{specialization_id}}\",\n  \"registration_number\": \"DEMO-001\",\n  \"qualifications\": \"Fictional credentials\",\n  \"biography\": \"\",\n  \"professional_phone\": \"\",\n  \"years_of_experience\": 8\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "9. List doctors",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/doctors/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "10. Doctor details",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/doctors/{{doctor_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "11. Update doctor",
+      "request": {
+        "method": "PUT",
+        "url": "{{base_url}}/api/doctors/{{doctor_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sample Doctor\",\n  \"specialization\": \"{{specialization_id}}\",\n  \"registration_number\": \"DEMO-001\",\n  \"qualifications\": \"Fictional credentials\",\n  \"biography\": \"\",\n  \"professional_phone\": \"\",\n  \"years_of_experience\": 8\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Example is a supervisor PUT. For the super admin add managed_by (UUID or null). See the API contract for self edits."
+      }
+    },
+    {
+      "name": "12. Archive doctor",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/api/doctors/{{doctor_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "13. Assign doctor",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/mappings/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"patient_id\": \"{{patient_id}}\",\n  \"doctor_id\": \"{{doctor_id}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "14. List mappings",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/mappings/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "15. List patient mappings",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/mappings/{{patient_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "16. End assignment",
+      "request": {
+        "method": "DELETE",
+        "url": "{{base_url}}/api/mappings/{{mapping_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "17. Refresh session",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/auth/refresh/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const tokens = pm.response.json();",
+              "  pm.environment.set('access_token', tokens.access);",
+              "  pm.environment.set('refresh_token', tokens.refresh);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18. Logout",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/auth/logout/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "19. Current identity",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/auth/me/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "20. List accounts",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/users/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "21. Create admin or supervisor",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/users/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sample Person\",\n  \"email\": \"sample-supervisor@example.com\",\n  \"password\": \"{{temporary_password}}\",\n  \"role\": \"supervisor\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "22. Update account or change own password",
+      "request": {
+        "method": "PATCH",
+        "url": "{{base_url}}/api/users/{{user_id}}/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"is_active\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "For approval use {\"is_active\":true,\"approval_pending\":false}. For your own password use {\"current_password\":\"{{password}}\",\"password\":\"{{new_password}}\"}."
+      }
+    },
+    {
+      "name": "23. Workspace dashboard",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/dashboard/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "24. List audit events",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/audit-logs/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "25. Ask assistant",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/v1/assistant/chat/",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"How do I use the directory?\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1482 @@
+openapi: 3.0.3
+info:
+  title: Medora Healthcare DRF API
+  version: 1.0.0
+paths:
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+          description: ''
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Refresh'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+  /api/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Refresh'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+          description: ''
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Signup'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+  /api/doctors/:
+    get:
+      operationId: doctors_list
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: managed
+        schema:
+          type: boolean
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 150
+      - in: query
+        name: sort
+        schema:
+          type: string
+          maxLength: 24
+          minLength: 1
+      - in: query
+        name: specialization
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - doctors
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorDirectoryPage'
+          description: ''
+    post:
+      operationId: doctors_create
+      tags:
+      - doctors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoctorCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorManaged'
+          description: ''
+  /api/doctors/{id}/:
+    get:
+      operationId: doctors_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - doctors
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorManaged'
+          description: ''
+    put:
+      operationId: doctors_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - doctors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DoctorPut'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorManaged'
+          description: ''
+    delete:
+      operationId: doctors_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - doctors
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/mappings/:
+    get:
+      operationId: mappings_list
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: doctor_id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: patient_id
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 150
+      - in: query
+        name: sort
+        schema:
+          type: string
+          maxLength: 24
+          minLength: 1
+      tags:
+      - mappings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentReadPage'
+          description: ''
+    post:
+      operationId: mappings_create
+      tags:
+      - mappings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentManaged'
+          description: ''
+  /api/mappings/{id}/:
+    get:
+      operationId: mappings_retrieve
+      description: The path UUID is a patient ID for GET.
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: doctor_id
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 150
+      - in: query
+        name: sort
+        schema:
+          type: string
+          maxLength: 24
+          minLength: 1
+      tags:
+      - mappings
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentReadPage'
+          description: ''
+    delete:
+      operationId: mappings_destroy
+      description: The path UUID is a mapping ID for DELETE.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - mappings
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/patients/:
+    get:
+      operationId: patients_list
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: assignable
+        schema:
+          type: boolean
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 150
+      - in: query
+        name: sort
+        schema:
+          type: string
+          maxLength: 24
+          minLength: 1
+      tags:
+      - patients
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientManagedPage'
+          description: ''
+    post:
+      operationId: patients_create
+      tags:
+      - patients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientManaged'
+          description: ''
+  /api/patients/{id}/:
+    get:
+      operationId: patients_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - patients
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientManaged'
+          description: ''
+    put:
+      operationId: patients_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - patients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatientPut'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientManaged'
+          description: ''
+    delete:
+      operationId: patients_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - patients
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/:
+    get:
+      operationId: users_retrieve
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+      - in: query
+        name: role
+        schema:
+          enum:
+          - super_admin
+          - supervisor
+          - doctor
+          - patient
+          type: string
+          minLength: 1
+        description: |-
+          * `super_admin` - Super Admin
+          * `supervisor` - Supervisor
+          * `doctor` - Doctor
+          * `patient` - Patient
+      - in: query
+        name: search
+        schema:
+          type: string
+          maxLength: 150
+      - in: query
+        name: sort
+        schema:
+          type: string
+          maxLength: 24
+          minLength: 1
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountPage'
+          description: ''
+    post:
+      operationId: users_create
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminAccountCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+  /api/users/{id}/:
+    patch:
+      operationId: users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAccountPatch'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: ''
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        role:
+          $ref: '#/components/schemas/AccountRoleEnum'
+        is_active:
+          type: boolean
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        approval_pending:
+          type: boolean
+        is_archived:
+          type: boolean
+          readOnly: true
+        must_change_password:
+          type: boolean
+        profile_id:
+          type: string
+          nullable: true
+          readOnly: true
+        date_joined:
+          type: string
+          format: date-time
+      required:
+      - email
+      - id
+      - is_archived
+      - name
+      - profile_id
+      - role
+    AccountPage:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Account'
+      required:
+      - count
+      - next
+      - previous
+      - results
+    AccountRoleEnum:
+      enum:
+      - super_admin
+      - supervisor
+      - doctor
+      - patient
+      type: string
+      description: |-
+        * `super_admin` - Super Admin
+        * `supervisor` - Supervisor
+        * `doctor` - Doctor
+        * `patient` - Patient
+    AdminAccountCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+          minLength: 12
+        role:
+          allOf:
+          - $ref: '#/components/schemas/AdminAccountCreateRoleEnum'
+          default: supervisor
+      required:
+      - email
+      - name
+      - password
+    AdminAccountCreateRoleEnum:
+      enum:
+      - supervisor
+      - super_admin
+      type: string
+      description: |-
+        * `supervisor` - supervisor
+        * `super_admin` - super_admin
+    AssignmentCreate:
+      type: object
+      properties:
+        patient_id:
+          type: string
+          format: uuid
+        doctor_id:
+          type: string
+          format: uuid
+        assignment_reason:
+          type: string
+          maxLength: 250
+      required:
+      - doctor_id
+      - patient_id
+    AssignmentManaged:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        patient_id:
+          type: string
+          format: uuid
+          readOnly: true
+        doctor_id:
+          type: string
+          format: uuid
+          readOnly: true
+        patient_name:
+          type: string
+        doctor_name:
+          type: string
+        doctor_specialization:
+          type: string
+        assigned_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+        assigned_by:
+          type: string
+          format: uuid
+          nullable: true
+        ended_by:
+          type: string
+          format: uuid
+          nullable: true
+        assignment_reason:
+          type: string
+          maxLength: 250
+      required:
+      - assigned_at
+      - doctor_id
+      - doctor_name
+      - doctor_specialization
+      - id
+      - patient_id
+      - patient_name
+    AssignmentRead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        patient_id:
+          type: string
+          format: uuid
+          readOnly: true
+        doctor_id:
+          type: string
+          format: uuid
+          readOnly: true
+        patient_name:
+          type: string
+        doctor_name:
+          type: string
+        doctor_specialization:
+          type: string
+        assigned_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ended_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - assigned_at
+      - doctor_id
+      - doctor_name
+      - doctor_specialization
+      - id
+      - patient_id
+      - patient_name
+    AssignmentReadPage:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssignmentRead'
+      required:
+      - count
+      - next
+      - previous
+      - results
+    BlankEnum:
+      enum:
+      - ''
+    BloodGroupEnum:
+      enum:
+      - A+
+      - A-
+      - B+
+      - B-
+      - AB+
+      - AB-
+      - O+
+      - O-
+      type: string
+      description: |-
+        * `A+` - A+
+        * `A-` - A-
+        * `B+` - B+
+        * `B-` - B-
+        * `AB+` - AB+
+        * `AB-` - AB-
+        * `O+` - O+
+        * `O-` - O-
+    DoctorAdmin:
+      type: object
+      properties:
+        qualifications:
+          type: string
+          maxLength: 500
+        biography:
+          type: string
+          maxLength: 2000
+        professional_phone:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 150
+        specialization:
+          type: string
+          format: uuid
+        registration_number:
+          type: string
+          maxLength: 40
+        years_of_experience:
+          type: integer
+          maximum: 75
+          minimum: 0
+        managed_by:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - biography
+      - managed_by
+      - name
+      - professional_phone
+      - qualifications
+      - registration_number
+      - specialization
+      - years_of_experience
+    DoctorCreate:
+      type: object
+      properties:
+        qualifications:
+          type: string
+          maxLength: 500
+        biography:
+          type: string
+          maxLength: 2000
+        professional_phone:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 150
+        specialization:
+          type: string
+          format: uuid
+        registration_number:
+          type: string
+          maxLength: 40
+        years_of_experience:
+          type: integer
+          maximum: 75
+          minimum: 0
+        managed_by:
+          type: string
+          format: uuid
+          nullable: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+          minLength: 12
+      required:
+      - email
+      - name
+      - password
+      - registration_number
+      - specialization
+    DoctorDirectory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        specialization:
+          type: string
+          format: uuid
+        specialization_name:
+          type: string
+          readOnly: true
+        years_of_experience:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        qualifications:
+          type: string
+          maxLength: 500
+        biography:
+          type: string
+          maxLength: 2000
+      required:
+      - id
+      - name
+      - specialization
+      - specialization_name
+    DoctorDirectoryPage:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DoctorDirectory'
+      required:
+      - count
+      - next
+      - previous
+      - results
+    DoctorEdit:
+      type: object
+      properties:
+        qualifications:
+          type: string
+          maxLength: 500
+        biography:
+          type: string
+          maxLength: 2000
+        professional_phone:
+          type: string
+          maxLength: 30
+      required:
+      - biography
+      - professional_phone
+      - qualifications
+    DoctorManaged:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        specialization:
+          type: string
+          format: uuid
+        specialization_name:
+          type: string
+          readOnly: true
+        years_of_experience:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        qualifications:
+          type: string
+          maxLength: 500
+        biography:
+          type: string
+          maxLength: 2000
+        email:
+          type: string
+          format: email
+          readOnly: true
+        registration_number:
+          type: string
+          maxLength: 40
+        professional_phone:
+          type: string
+          maxLength: 20
+        managed_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        is_active:
+          type: boolean
+          readOnly: true
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - email
+      - id
+      - is_active
+      - name
+      - registration_number
+      - specialization
+      - specialization_name
+      - updated_at
+    DoctorManagement:
+      type: object
+      properties:
+        qualifications:
+          type: string
+          maxLength: 500
+        biography:
+          type: string
+          maxLength: 2000
+        professional_phone:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 150
+        specialization:
+          type: string
+          format: uuid
+        registration_number:
+          type: string
+          maxLength: 40
+        years_of_experience:
+          type: integer
+          maximum: 75
+          minimum: 0
+      required:
+      - biography
+      - name
+      - professional_phone
+      - qualifications
+      - registration_number
+      - specialization
+      - years_of_experience
+    DoctorPut:
+      oneOf:
+      - $ref: '#/components/schemas/DoctorAdmin'
+      - $ref: '#/components/schemas/DoctorManagement'
+      - $ref: '#/components/schemas/DoctorEdit'
+    GenderEnum:
+      enum:
+      - unspecified
+      - woman
+      - man
+      - non_binary
+      type: string
+      description: |-
+        * `unspecified` - Unspecified
+        * `woman` - Woman
+        * `man` - Man
+        * `non_binary` - Non-binary
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+        portal:
+          $ref: '#/components/schemas/PortalEnum'
+      required:
+      - email
+      - password
+    PatchedAccountPatch:
+      oneOf:
+      - $ref: '#/components/schemas/PatchedAccountUpdate'
+      - $ref: '#/components/schemas/PatchedPasswordChange'
+    PatchedAccountUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        is_active:
+          type: boolean
+        approval_pending:
+          type: boolean
+    PatchedPasswordChange:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+          minLength: 12
+    PatientAdmin:
+      type: object
+      properties:
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          $ref: '#/components/schemas/GenderEnum'
+        blood_group:
+          oneOf:
+          - $ref: '#/components/schemas/BloodGroupEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+          maxLength: 500
+        name:
+          type: string
+          maxLength: 150
+        allergies:
+          type: string
+          maxLength: 1000
+        medical_history:
+          type: string
+          maxLength: 4000
+        managed_by:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - address
+      - allergies
+      - blood_group
+      - date_of_birth
+      - gender
+      - managed_by
+      - medical_history
+      - name
+      - phone
+    PatientCreate:
+      type: object
+      properties:
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          $ref: '#/components/schemas/GenderEnum'
+        blood_group:
+          oneOf:
+          - $ref: '#/components/schemas/BloodGroupEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+          maxLength: 500
+        name:
+          type: string
+          maxLength: 150
+        allergies:
+          type: string
+          maxLength: 1000
+        medical_history:
+          type: string
+          maxLength: 4000
+        managed_by:
+          type: string
+          format: uuid
+          nullable: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+          minLength: 12
+      required:
+      - email
+      - name
+      - password
+    PatientEdit:
+      type: object
+      properties:
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          $ref: '#/components/schemas/GenderEnum'
+        blood_group:
+          oneOf:
+          - $ref: '#/components/schemas/BloodGroupEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+          maxLength: 500
+        name:
+          type: string
+          maxLength: 150
+      required:
+      - address
+      - blood_group
+      - date_of_birth
+      - gender
+      - name
+      - phone
+    PatientManaged:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          $ref: '#/components/schemas/GenderEnum'
+        blood_group:
+          oneOf:
+          - $ref: '#/components/schemas/BloodGroupEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        allergies:
+          type: string
+          maxLength: 1000
+        medical_history:
+          type: string
+          maxLength: 4000
+        email:
+          type: string
+          format: email
+          readOnly: true
+        phone:
+          type: string
+          maxLength: 20
+        address:
+          type: string
+          maxLength: 500
+        managed_by:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        is_active:
+          type: boolean
+          readOnly: true
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - email
+      - id
+      - is_active
+      - name
+      - updated_at
+    PatientManagedPage:
+      type: object
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PatientManaged'
+      required:
+      - count
+      - next
+      - previous
+      - results
+    PatientManagement:
+      type: object
+      properties:
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          $ref: '#/components/schemas/GenderEnum'
+        blood_group:
+          oneOf:
+          - $ref: '#/components/schemas/BloodGroupEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        phone:
+          type: string
+          maxLength: 30
+        address:
+          type: string
+          maxLength: 500
+        name:
+          type: string
+          maxLength: 150
+        allergies:
+          type: string
+          maxLength: 1000
+        medical_history:
+          type: string
+          maxLength: 4000
+      required:
+      - address
+      - allergies
+      - blood_group
+      - date_of_birth
+      - gender
+      - medical_history
+      - name
+      - phone
+    PatientPut:
+      oneOf:
+      - $ref: '#/components/schemas/PatientAdmin'
+      - $ref: '#/components/schemas/PatientManagement'
+      - $ref: '#/components/schemas/PatientEdit'
+    PortalEnum:
+      enum:
+      - patient
+      - doctor
+      - supervisor
+      type: string
+      description: |-
+        * `patient` - patient
+        * `doctor` - doctor
+        * `supervisor` - supervisor
+    Refresh:
+      type: object
+      properties:
+        refresh:
+          type: string
+          writeOnly: true
+          maxLength: 4096
+      required:
+      - refresh
+    Role2d0Enum:
+      enum:
+      - patient
+      - doctor
+      - supervisor
+      type: string
+      description: |-
+        * `patient` - patient
+        * `doctor` - doctor
+        * `supervisor` - supervisor
+    Signup:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+          minLength: 12
+        role:
+          allOf:
+          - $ref: '#/components/schemas/Role2d0Enum'
+          default: patient
+        specialization_slug:
+          type: string
+          maxLength: 100
+        registration_number:
+          type: string
+          maxLength: 40
+      required:
+      - email
+      - name
+      - password
+    TokenPair:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

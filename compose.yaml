@@ -1,0 +1,30 @@
+services:
+  backend:
+    build: ./backend
+    env_file: .env
+    ports:
+      - "127.0.0.1:8000:8000"
+  frontend:
+    build: ./frontend
+    environment:
+      DJANGO_API_ORIGIN: http://backend:8000
+      APP_ORIGIN: http://localhost:3000
+      MEDORA_LOCAL_HTTP: "1"
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - backend
+  db-test:
+    image: postgres:16
+    profiles: [test]
+    environment:
+      POSTGRES_USER: medora
+      POSTGRES_PASSWORD: medora-test-only
+      POSTGRES_DB: medora_test
+    ports:
+      - "127.0.0.1:55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+  redis:
+    image: redis:8
+    profiles: [cache]

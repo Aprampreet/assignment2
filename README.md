@@ -1,0 +1,149 @@
+# Medora Healthcare
+
+Medora is a healthcare coordination platform for four roles. Patients see their care team, doctors see their assigned patients, supervisors manage records and assignments, and super admins manage accounts and approvals. The project uses synthetic data and is designed as a technical demonstration.
+
+[Product and engineering specification](dicription.md) · [API contract](docs/api.md) · [Postman collection](docs/medora.postman_collection.json) · [DRF OpenAPI](docs/drf.openapi.yaml) · [Ninja OpenAPI](docs/ninja.openapi.json)
+
+## What you can do
+
+- Register as a patient and enter the workspace immediately.
+- Request a doctor or supervisor account, then wait for a super admin to approve it.
+- Sign in through Patient, Doctor, or Supervisor / Admin access.
+- Create and manage patients, doctors, supervisors, and additional super admins according to role.
+- Assign doctors to patients and retain assignment history when an assignment ends.
+- Browse a safe doctor directory and ask the workspace assistant about navigation or authorized counts.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser[Next.js browser UI] --> BFF[Next.js API route]
+    BFF --> DRF[Django REST Framework]
+    BFF --> Ninja[Django Ninja]
+    DRF --> Policy[Shared policies and services]
+    Ninja --> Policy
+    Policy --> ORM[Django ORM]
+    ORM --> DB[(Supabase PostgreSQL\nprivate medora schema)]
+    Ninja --> Assistant[Allowlisted assistant intents]
+    Assistant -. approved generic help only .-> Groq[Optional Groq API]
+```
+
+Django handles all database access. The frontend keeps JWTs in HttpOnly cookies through its same-origin BFF. The Supabase publishable key is not needed. The assistant answers scoped counts locally and sends only fixed navigation instructions to Groq when a provider key is configured.
+
+## Start locally without Docker
+
+Use Python 3.13, Node.js 22, and the configured Supabase project. Copy `.env.example` to `.env` and fill in the private values. Keep `.env` outside version control. The current workspace already has a local `.env` with the Supabase connection and a generated bootstrap administrator password.
+
+From the repository root:
+
+```bash
+python3.13 -m venv .venv
+.venv/bin/pip install -r backend/requirements.txt
+.venv/bin/python backend/manage.py migrate
+.venv/bin/python backend/manage.py bootstrap_admin
+.venv/bin/python backend/manage.py runserver 127.0.0.1:8000
+```
+
+In another terminal:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Create `frontend/.env.local` with:
+
+```dotenv
+APP_ORIGIN=http://localhost:3000
+DJANGO_API_ORIGIN=http://127.0.0.1:8000
+```
+
+Open `http://localhost:3000`. Use `localhost` in the browser so the CSRF Origin matches. Select **Supervisor / Admin** to sign in as an administrator. The bootstrap command is idempotent for the configured email. To create a second administrator, use **Accounts** → **Add account** → **Super Admin**, or bootstrap with a different email. To change an existing admin password, run `python backend/manage.py changepassword ADMIN_EMAIL` in the configured Python environment.
+
+### Set up a new Supabase project
+
+1. Create a Supabase project and copy its PostgreSQL connection string from **Connect**. Use a direct connection when IPv6 works, or the session pooler on port 5432. Percent-encode special characters in the password.
+2. Provision a private schema using [the SQL template](docs/provision-supabase.sql). Configure `DATABASE_SCHEMA=medora` and the backend-only `DATABASE_URL`. Supply `MIGRATION_DATABASE_URL` if migrations use a separate owner role.
+3. Keep `medora` out of Supabase Data API exposed schemas and revoke `anon` and `authenticated` access. Django migrations own all tables, including authentication tables.
+4. Set `DJANGO_SECRET_KEY` to a strong random value. Run migrations and bootstrap an admin using the commands above.
+
+Django requires TLS for Supabase. Set `DATABASE_SSL_ROOT_CERT` to use hostname verification with a trusted CA. The configured local Supabase connection and migrations were verified. Keep the connection budget within the project's database limit.
+
+## First-use walkthrough
+
+```mermaid
+flowchart TD
+    Visit[Open Medora] --> Register{Choose account type}
+    Register -->|Patient| Active[Account active immediately]
+    Register -->|Doctor or supervisor| Pending[Inactive approval request]
+    Pending --> Admin[Super admin reviews Accounts]
+    Admin --> Approve[Approve request]
+    Approve --> Login[Sign in]
+    Active --> Login
+    Login --> Workspace[Role-specific workspace]
+```
+
+For a management walkthrough, sign in as a super admin and create a supervisor under **Supervisors**. The supervisor can create a patient and doctor, then open **Assignments** to connect them. A doctor sees only currently assigned patients. A patient sees only their own profile and active care team. The admin can review changes under **Audit log**.
+
+### Django administration
+
+Super admins can also sign in at `/admin/` with their email and password. This is an operational console with searchable, filtered account, patient, doctor, assignment and audit views. In **Users**, filter by **Approval pending**, select doctor or supervisor requests, then choose **Approve selected doctor and supervisor registrations**. The action uses the account service and writes an audit event for each approval. The **Specializations** section maintains the doctor registration taxonomy.
+
+Profiles, assignments and audit events are read-only in Django admin so changes continue through the role-scoped application services. Create supervisors and additional super admins in the Medora workspace. Run `collectstatic` when deploying Django so the custom admin stylesheet is available.
+
+A developer-only `seed_demo` command can populate synthetic supervisor, doctor, and patient accounts. It requires `DJANGO_DEBUG=1`, `DATABASE_SCHEMA=medora_demo`, `ALLOW_DEMO_SEED=1`, and `DEMO_PASSWORD` in a dedicated development schema. Run `bootstrap_admin` first. Demo users must change their temporary password on first login. Do not run demo seeding against the shared application schema.
+
+## API and permission model
+
+The project has exactly 25 business operations, with 22 DRF operations and three Ninja operations. See [the full route inventory, request fields, filters, responses, and error codes](docs/api.md). Interactive docs are available in debug at `/api/docs/` and `/api/v1/docs/`.
+
+```mermaid
+flowchart LR
+    Request[Authenticated request] --> Current[Load current active user]
+    Current --> Role[Check current database role]
+    Role --> Scope[Scope queryset to owned or assigned objects]
+    Scope --> Lookup[Look up UUID]
+    Lookup --> Service[Validate and write in transaction]
+    Service --> Audit[Write audit event in same transaction]
+```
+
+A supervisor can manage only their own patients and doctors, while they may assign any active doctor to a patient they manage. Doctors see patients through active assignments only. Patients see only their own profile and assigned doctors. The directory exposes safe professional fields to all authenticated roles. Pending or suspended users cannot access business operations. Inaccessible objects return 404, disallowed operations return 403, and conflicts return 409.
+
+## Data model
+
+```mermaid
+erDiagram
+    USER ||--o| PATIENT_PROFILE : has
+    USER ||--o| DOCTOR_PROFILE : has
+    USER o|--o{ USER : creates
+    USER o|--o{ PATIENT_PROFILE : manages
+    USER o|--o{ DOCTOR_PROFILE : manages
+    SPECIALIZATION ||--o{ DOCTOR_PROFILE : classifies
+    PATIENT_PROFILE ||--o{ PATIENT_DOCTOR_MAPPING : receives
+    DOCTOR_PROFILE ||--o{ PATIENT_DOCTOR_MAPPING : serves
+    USER o|--o{ AUDIT_LOG : acts
+```
+
+UUID primary keys, timezone-aware timestamps, normalized specialties, case-insensitive email uniqueness, and a partial unique constraint for active doctor–patient pairs protect the data model. Archival deactivates the profile user and ends active assignments in one transaction. Assignment history and audit entries remain available to authorized management users. [The detailed model and lifecycle specification](dicription.md#data-model-and-lifecycle) documents ownership, deletion, and index choices.
+
+## Tests and checks
+
+Tests require a **disposable local PostgreSQL** server with a `medora_test` database and a role that can create test databases. The test runner checks the URL and refuses a shared Supabase host. Set `TEST_DATABASE_URL` to that local server, then run:
+
+```bash
+cd backend
+TEST_DATABASE_URL=postgresql://medora:medora-test-only@127.0.0.1:55432/medora_test ../.venv/bin/pytest -q
+cd ../frontend
+npm run lint
+npm run typecheck
+npm run build
+```
+
+The repository also includes Chromium smoke tests in `frontend/e2e`. Run `npm run test:e2e` against a disposable seeded environment after setting the `E2E_*` variables in [the test file](frontend/e2e/workspace.spec.ts). CI runs PostgreSQL API tests and the frontend checks in `.github/workflows/ci.yml`.
+
+## Deployment and operation
+
+Deploy Django to a Python/Gunicorn host and Next.js to a Node host such as Vercel. Put the two backend-only origins in the Next.js server environment. Run migrations as a one-off task with the migration database role. Serve Django admin static files, use HTTPS, explicit host and proxy settings, and `DJANGO_DEBUG=0`. Set a shared Redis cache or edge rate limits for multi-worker production. The local in-memory limiter applies per process.
+
+Access tokens last five minutes. Refresh tokens rotate and are blacklisted on logout. Password changes invalidate existing JWTs. The browser BFF validates Origin and CSRF tokens for writes, allowlists backend routes, and disables authenticated response caching. Audit data and database backups require restricted operational access. Define data retention and consent procedures before any real-data use. The platform has no public password reset or email delivery flow in this assignment.

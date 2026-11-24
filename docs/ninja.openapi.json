@@ -1,0 +1,440 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Medora Healthcare Workspace",
+    "version": "1",
+    "description": ""
+  },
+  "paths": {
+    "/api/v1/dashboard/": {
+      "get": {
+        "operationId": "config_ninja_api_get_dashboard",
+        "summary": "Get Dashboard",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dashboard"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/audit-logs/": {
+      "get": {
+        "operationId": "config_ninja_api_get_audit",
+        "summary": "Get Audit",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "start",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "end",
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "oldest"
+              ],
+              "title": "Sort",
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/assistant/chat/": {
+      "post": {
+        "operationId": "config_ninja_api_chat",
+        "summary": "Chat",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatReply"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Chat"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "Bearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Activity": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "actor_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Id"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Id"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "resource_type": {
+            "title": "Resource Type",
+            "type": "string"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Metadata",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "actor_id",
+          "resource_id",
+          "request_id",
+          "action",
+          "resource_type",
+          "outcome",
+          "created_at",
+          "metadata"
+        ],
+        "title": "Activity",
+        "type": "object"
+      },
+      "Dashboard": {
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "specializations": {
+            "items": {
+              "$ref": "#/components/schemas/Specialty"
+            },
+            "title": "Specializations",
+            "type": "array"
+          },
+          "recent_activity": {
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            },
+            "title": "Recent Activity",
+            "type": "array"
+          }
+        },
+        "required": [
+          "counts",
+          "specializations",
+          "recent_activity"
+        ],
+        "title": "Dashboard",
+        "type": "object"
+      },
+      "Specialty": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "Specialty",
+        "type": "object"
+      },
+      "AuditQuery": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "sort": {
+            "default": "recent",
+            "enum": [
+              "recent",
+              "oldest"
+            ],
+            "title": "Sort",
+            "type": "string"
+          }
+        },
+        "title": "AuditQuery",
+        "type": "object"
+      },
+      "AuditPage": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
+          },
+          "previous": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "next",
+          "previous",
+          "results"
+        ],
+        "title": "AuditPage",
+        "type": "object"
+      },
+      "ChatReply": {
+        "properties": {
+          "reply": {
+            "title": "Reply",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "workspace",
+              "groq",
+              "help"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reply",
+          "source"
+        ],
+        "title": "ChatReply",
+        "type": "object"
+      },
+      "Chat": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "Chat",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "servers": []
+}
