@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 from django.core.cache import cache
 from django.db import IntegrityError, close_old_connections, connection, transaction
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -384,3 +385,27 @@ def test_admin_can_create_another_super_admin():
     assert created.must_change_password and created.created_by == existing
     assert login(created).status_code == 200
     assert client(create_user(Role.SUPERVISOR)).post("/api/users/", attrs(email="third-admin@demo.example", role="super_admin"), format="json").status_code == 403
+
+
+def test_list_query_counts_do_not_grow_with_page_size():
+    supervisor = create_user(Role.SUPERVISOR)
+    for _ in range(20):
+        create_patient(supervisor)
+        create_doctor(supervisor)
+    api_client = client(supervisor)
+
+    for resource in ("patients", "doctors"):
+        measurements = {}
+        for size in (1, 20):
+            with CaptureQueriesContext(connection) as queries:
+                response = api_client.get(f"/api/{resource}/?page_size={size}")
+            assert response.status_code == 200
+            assert len(response.data["results"]) == size
+            measurements[size] = len(queries)
+        print(f"{resource}: page_size=1 {measurements[1]} queries; page_size=20 {measurements[20]} queries")
+        assert measurements[20] <= measurements[1]
+
+    with CaptureQueriesContext(connection) as queries:
+        response = api_client.get("/api/v1/dashboard/")
+    assert response.status_code == 200
+    print(f"supervisor dashboard: {len(queries)} queries")

@@ -32,11 +32,17 @@ INSTALLED_APPS = [
     "accounts", "patients", "doctors", "mappings", "audit", "dashboard", "assistant",
 ]
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware", "config.http.RequestContext",
+    "django.middleware.security.SecurityMiddleware", "whitenoise.middleware.WhiteNoiseMiddleware",
+    "config.http.RequestContext",
     "django.contrib.sessions.middleware.SessionMiddleware", "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware", "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware", "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+if not DEBUG:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates", "APP_DIRS": True,
     "DIRS": [Path(__file__).resolve().parents[1] / "templates"],
