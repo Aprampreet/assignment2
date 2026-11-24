@@ -35,10 +35,12 @@ function clear(response: NextResponse) {
 }
 
 function csrf(request: NextRequest) {
-  const origin = process.env.APP_ORIGIN || (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "");
+  const host = request.headers.get("host");
+  const protocol = request.headers.get("x-forwarded-proto") || request.nextUrl.protocol.slice(0, -1);
+  const origin = host ? `${protocol}://${host}` : "";
   const cookie = request.cookies.get(names.csrf)?.value || "";
   const header = request.headers.get("x-csrf-token") || "";
-  return !!origin && request.headers.get("origin") === origin &&
+  return !!host && request.headers.get("origin") === origin &&
     /^[a-f0-9]{64}$/.test(cookie) && /^[a-f0-9]{64}$/.test(header) &&
     timingSafeEqual(Buffer.from(cookie), Buffer.from(header));
 }

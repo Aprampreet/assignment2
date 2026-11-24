@@ -2,6 +2,8 @@
 
 Medora is a healthcare coordination platform for four roles. Patients see their care team, doctors see their assigned patients, supervisors manage records and assignments, and super admins manage accounts and approvals. The project uses synthetic data and is designed as a technical demonstration.
 
+**Live application:** [Open Medora Healthcare](https://assignment2-gold-one.vercel.app/)
+
 [Product and engineering specification](dicription.md) · [API contract](docs/api.md) · [Postman collection](docs/medora.postman_collection.json) · [DRF OpenAPI](docs/drf.openapi.yaml) · [Ninja OpenAPI](docs/ninja.openapi.json)
 
 ## What you can do
@@ -55,11 +57,10 @@ npm run dev
 Create `frontend/.env.local` with:
 
 ```dotenv
-APP_ORIGIN=http://localhost:3000
 DJANGO_API_ORIGIN=http://127.0.0.1:8000
 ```
 
-Open `http://localhost:3000`. Use `localhost` in the browser so the CSRF Origin matches. Select **Supervisor / Admin** to sign in as an administrator. The bootstrap command is idempotent for the configured email. To create a second administrator, use **Accounts** → **Add account** → **Super Admin**, or bootstrap with a different email. To change an existing admin password, run `python backend/manage.py changepassword ADMIN_EMAIL` in the configured Python environment.
+Open `http://localhost:3000`. Select **Supervisor / Admin** to sign in as an administrator. The BFF checks the browser Origin against the URL receiving the request and verifies its CSRF cookie and header. The bootstrap command is idempotent for the configured email. To create a second administrator, use **Accounts** → **Add account** → **Super Admin**, or bootstrap with a different email. To change an existing admin password, run `python backend/manage.py changepassword ADMIN_EMAIL` in the configured Python environment.
 
 ### Set up a new Supabase project
 
@@ -154,6 +155,12 @@ The query-budget test creates 20 managed patients and 20 managed doctors in the 
 
 Deploy Django to a Python/Gunicorn host and Next.js to a Node host such as Vercel. Put the two backend-only origins in the Next.js server environment. Run migrations as a one-off task with the migration database role. Serve Django admin static files, use HTTPS, explicit host and proxy settings, and `DJANGO_DEBUG=0`. Set a shared Redis cache or edge rate limits for multi-worker production. The local in-memory limiter applies per process.
 
-For a Render Python web service, set **Root Directory** to `backend`, **Build Command** to `bash build.sh`, and **Start Command** to `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 30`. The build script installs dependencies, collects WhiteNoise static assets, and applies migrations. Render Free does not provide a separate pre-deploy command, so migrations run during the build. Use a Supabase **Session pooler** URL from the project's **Connect** dialog on port 5432 for `DATABASE_URL`, and for `MIGRATION_DATABASE_URL` if configured. Its username is `postgres.<project-ref>` and its hostname is the exact pooler host shown by Supabase; the host cannot be inferred reliably from the project region. The direct Supabase host normally requires IPv6, which Render cannot use. Set `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS=<your-backend>.onrender.com`, and `TRUST_HTTPS_PROXY=1` on Render. Set `DJANGO_API_ORIGIN` on Vercel to the Render backend URL and `APP_ORIGIN` to the Vercel frontend URL. `DJANGO_ALLOWED_HOSTS` accepts hostnames only, without `https://` or a trailing slash. `.python-version` pins the repository to Python 3.13.5.
+For a Render Python web service, set **Root Directory** to `backend`, **Build Command** to `bash build.sh`, and **Start Command** to `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 30`. The build script installs dependencies, collects WhiteNoise static assets, and applies migrations. Render Free does not provide a separate pre-deploy command, so migrations run during the build. Use a Supabase **Session pooler** URL from the project's **Connect** dialog on port 5432 for `DATABASE_URL`, and for `MIGRATION_DATABASE_URL` if configured. Its username is `postgres.<project-ref>` and its hostname is the exact pooler host shown by Supabase; the host cannot be inferred reliably from the project region. The direct Supabase host normally requires IPv6, which Render cannot use. Set `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS=<your-backend>.onrender.com`, and `TRUST_HTTPS_PROXY=1` on Render. Set `DJANGO_API_ORIGIN` on Vercel to the Render backend URL. `DJANGO_ALLOWED_HOSTS` accepts hostnames only, without `https://` or a trailing slash. `.python-version` pins the repository to Python 3.13.5.
+
+### Demo keep-alive
+
+`GET /health/` on Django is a public, database-free liveness probe. `GET /api/health` on Vercel forwards the request to that Django route with caching disabled. The [scheduled GitHub Actions workflow](.github/workflows/keep-render-awake.yml) calls the Vercel route at minutes 5, 19, 33, 47, and 59 of each hour, so planned gaps are at most 14 minutes. The default target is `https://assignment2-gold-one.vercel.app/api/health`; set the `MEDORA_PING_URL` GitHub Actions repository variable if that frontend URL changes. Vercel must have `DJANGO_API_ORIGIN` set to the public Render backend URL for the proxy to reach Render. Run the workflow manually once with **Run workflow** and confirm it returns `{"status":"ok"}`.
+
+This is a best-effort demo convenience. [GitHub scheduled jobs can run late or be dropped](https://docs.github.com/en/actions/how-tos/troubleshoot-workflows), so a 14-minute schedule cannot guarantee that a [Render Free service never sleeps](https://render.com/docs/free). The endpoint reports process liveness, not database readiness.
 
 Access tokens last five minutes. Refresh tokens rotate and are blacklisted on logout. Password changes invalidate existing JWTs. The browser BFF validates Origin and CSRF tokens for writes, allowlists backend routes, and disables authenticated response caching. Audit data and database backups require restricted operational access. Define data retention and consent procedures before any real-data use. The platform has no public password reset or email delivery flow in this assignment.

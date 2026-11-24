@@ -6,12 +6,14 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from config import views
 from config.ninja_api import api
 from config.http import error_data
+from config.health import health
 
 admin.site.site_header = "Medora administration"
 admin.site.site_title = "Medora administration"
 admin.site.index_title = "Operations and records"
 
 urlpatterns = [
+    path("health/", health, name="health"),
     path("admin/", admin.site.urls),
     path("api/v1/", api.urls),
     path("api/auth/register/", views.Register.as_view()),
