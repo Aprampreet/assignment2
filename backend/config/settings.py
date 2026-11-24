@@ -64,11 +64,23 @@ if TESTING:
 else:
     if {"test", "flush"}.intersection(sys.argv[1:]):
         raise ImproperlyConfigured("Destructive commands require isolated test settings.")
-    url = env.get("DATABASE_URL", "")
+    database_variable = "DATABASE_URL"
     if "migrate" in sys.argv[1:] and env.get("MIGRATION_DATABASE_URL"):
-        url = env["MIGRATION_DATABASE_URL"]
-    if not urlsplit(url).hostname or not urlsplit(url).hostname.endswith((".supabase.co", ".pooler.supabase.com")):
-        raise ImproperlyConfigured("Set DATABASE_URL using the Supabase Connect panel.")
+        database_variable = "MIGRATION_DATABASE_URL"
+    url = env.get(database_variable, "").strip()
+    if not url:
+        raise ImproperlyConfigured(f"{database_variable} is missing from the service environment. Local .env files are not deployed.")
+    try:
+        parsed_url = urlsplit(url)
+        valid_url = (parsed_url.scheme in {"postgres", "postgresql"} and parsed_url.hostname
+                     and parsed_url.hostname.endswith((".supabase.co", ".pooler.supabase.com")))
+    except ValueError:
+        valid_url = False
+    if not valid_url:
+        raise ImproperlyConfigured(
+            f"{database_variable} must contain only a PostgreSQL connection URL from Supabase Connect. "
+            "For an IPv4-only host, select Session pooler; do not include the variable name or quotes."
+        )
 db = dj_database_url.parse(url, conn_max_age=0 if TESTING else 60, conn_health_checks=True)
 if db["ENGINE"] != "django.db.backends.postgresql":
     raise ImproperlyConfigured("PostgreSQL is required.")
